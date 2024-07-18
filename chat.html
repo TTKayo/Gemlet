@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
+
+<head>
+    <link rel="stylesheet" href="/Css/style.css">
+    <title>Real-Time Chat</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #chat { width: 100%; max-width: 600px; margin: 20px auto; }
+        #messages { padding: 10px; height: 300px; overflow-y: scroll; }
+        #inputForm { display: flex; }
+        #inputForm input { flex: 1; padding: 10px; }
+        #inputForm button { padding: 10px; }
+    </style>
+</head>
+<body>
+    <div style="height: 700px; background-color: rgba(132, 0, 255, 0.29); width: 200px; margin-top: -10px; margin-left: -10px;">
+        <h1 style="font-size: 30px; margin-left: 45px; ;">Gemlet</h1>
+        <a href="chat.html"><h1 style="font-size: 20px; margin-top: 100px; margin-left: 75px;">Stats</h1></a>
+        <a href="chat.html"><h1 style="font-size: 20px; margin-top: 100px; margin-left: 75px;">Chat</h1></a>
+        <h1 style="font-size: 20px; margin-top: 100px; margin-left: 75px;">Market</h1>
+        <h1 style="font-size: 20px; margin-top: 100px; margin-left: 75px;">Gems</h1>
+        <h1 style="font-size: 20px; margin-top: 100px; margin-left: 75px;">Logout</h1>
+     
+    </div>
+    <div style="margin-top: -650px; margin-left: 200px; width: 1000px;" id="chat">
+        <h1 style="width: 1325px; font-size: 20px;" id="messages"></h1>
+        <form id="inputForm">
+            <input style="width: 100%;" type="text" id="message" placeholder="Message" required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6E3YP2GZXsm3IWjLWFzzCDpeea2BMalI",
+            authDomain: "cosmik-3f54f.firebaseapp.com",
+            databaseURL: "https://cosmik-3f54f-default-rtdb.firebaseio.com",
+            projectId: "cosmik-3f54f",
+            storageBucket: "cosmik-3f54f.appspot.com",
+            messagingSenderId: "244082314102",
+            appId: "1:244082314102:web:4d8b5b6e2ff09d3ce40857",
+            measurementId: "G-94J1RD4JN2"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const messagesDiv = document.getElementById('messages');
+        const inputForm = document.getElementById('inputForm');
+        const messageInput = document.getElementById('message');
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(cname) == 0) {
+                    return c.substring(cname.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        const username = getCookie("username");
+        const roles = getCookie("roles");
+
+        inputForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+
+            if (username && message) {
+                await db.ref('usermessages').push({
+                    username,
+                    roles,
+                    message,
+                    timestamp: Date.now()
+                });
+                messageInput.value = '';
+            }
+        });
+
+        db.ref('usermessages').orderByChild('timestamp').on('value', (snapshot) => {
+            messagesDiv.innerHTML = '';
+            snapshot.forEach((childSnapshot) => {
+                const messageData = childSnapshot.val();
+                const messageElement = document.createElement('div');
+                messageElement.textContent = `${messageData.username} (${messageData.roles}): ${messageData.message}`;
+                messagesDiv.appendChild(messageElement);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+    </script>
+</body>
+</html>

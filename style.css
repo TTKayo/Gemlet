@@ -1,0 +1,28 @@
+h1{
+    color: white;
+    font-weight: 1000;
+    font-family: titan one;
+    font-size: 40px;
+}
+button{
+    border-radius: 10px;
+    height: 40px;
+    width: 200px;
+background-color: rgb(9, 0, 128); 
+   color: white;
+    font-weight: 1000;
+    font-family: titan one;
+    font-size: 20px;
+    border-color: rgb(14, 14, 93);
+    margin-left: 250px;
+}
+body{
+    background-color: rgb(5, 5, 108);
+}
+input{
+    background-color: rgb(72, 18, 123);
+    color: white;
+    font-weight: 1000;
+    font-family: titan one;
+    font-size: 20px;
+}

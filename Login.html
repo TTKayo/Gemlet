@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemlet | Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="/Css/style.css">
+</head>
+<body style="background-color: rgb(5, 5, 108);">
+    <div style="width: 500px; margin-left: 550px; margin-top: 125px; border-radius: 10px; height: 400px; background-color: rgb(98, 0, 255);" id="Login-Container">
+        <h1 style="text-align: center; color: white;">Gemlet Login</h1>
+        <form id="login-form" style="text-align: center; padding: 20px;">
+            <input type="text" id="username" placeholder="Username" required style="margin-bottom: 10px; width: 80%; padding: 10px;">
+            <input type="password" id="password" placeholder="Password" required style="margin-bottom: 10px; width: 80%; padding: 10px;">
+            <button style="margin-top: 50px; margin-left: -10px;" type="button" onclick="login()">Login</button>
+            <button style="margin-left: -10px;" type="button" onclick="createAccount()">Create Account</button>
+        </form>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCOIKlP9YhtX9xa5aoggmsrWwavlW-XuzI",
+            authDomain: "cosmik-7c124.firebaseapp.com",
+            databaseURL: "https://cosmik-7c124-default-rtdb.firebaseio.com",
+            projectId: "cosmik-7c124",
+            storageBucket: "cosmik-7c124.appspot.com",
+            messagingSenderId: "412506429662",
+            appId: "1:412506429662:web:9ca3e17199297df7384a4f",
+            measurementId: "G-R7K0LTHCK3"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const firestore = firebase.firestore();
+
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(cname) == 0) {
+                    return c.substring(cname.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function createAccount() {
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+            var profilePicture = "Cosmik.webp";
+
+            if (/[^a-zA-Z0-9]/.test(username)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Username',
+                    text: 'Username can only contain letters and numbers.'
+                });
+                return;
+            }
+
+            firebase.auth().createUserWithEmailAndPassword(username + "@example.com", password)
+                .then((userCredential) => {
+                    var user = userCredential.user;
+                    firestore.collection("users").doc(username).set({
+                        badges: [],
+                        tokens: 4500,
+                        roles: ["Common"],
+                        accepted: true,
+                        profilePicture: profilePicture,
+                        unlockedSkins: [],
+                        ban: false,
+                        banReason: "",
+                        panelAccess: false,
+                        showAnimation: true,
+                        password: password // Store the password directly
+                    }).then(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Account Created',
+                            text: 'Please Sign in Now'
+                        }).then(() => {
+                            window.location.href = "login.html"; // Redirect to login page
+                        });
+                    }).catch((error) => {
+                        console.error("Error adding document: ", error);
+                    });
+                })
+                .catch((error) => {
+                    var errorMessage = error.message;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMessage
+                    });
+                });
+        }
+
+        function login() {
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+
+            firestore.collection("users").doc(username).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        if (userData.ban) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Banned',
+                                text: 'You are banned for ' + userData.banReason
+                            });
+                        } else {
+                            // Compare stored password with entered password
+                            if (password === userData.password) {
+                                setCookie("username", username, 1); // Set the cookie for 1 day
+                                setCookie("roles", userData.roles.join(','), 1); // Set the roles cookie
+                                setCookie("tokens", userData.tokens, 1); // Set the tokens cookie
+                                window.location.href = `stats.html`;
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Authentication Failed',
+                                    text: 'Invalid username or password.'
+                                });
+                            }
+                        }
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'User Not Found',
+                            text: 'User does not exist.'
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error getting document:", error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to retrieve user data. Please try again later.'
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
